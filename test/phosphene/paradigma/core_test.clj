@@ -54,11 +54,13 @@
              chunked)))))
 
 (deftest generative-spec-check-test
-  (testing "Generative property checking with test.check"
+  (testing "Generative property checking with test.check across dense term vocabularies"
     (let [res (stest/check [`core/create-vocabulary
+                            `core/member?
+                            `core/build-equivalence-map
                             `core/project-sequence
                             `core/chunk-mwe-sequence]
-                           {:clojure.spec.test.check/opts {:num-tests 50}})]
+                           {:clojure.spec.test.check/opts {:num-tests 100}})]
       (doseq [r res]
         (let [sym (:sym r)
               check-ret (:clojure.spec.test.check/ret r)
