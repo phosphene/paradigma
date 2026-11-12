@@ -39,16 +39,25 @@
     {}
     synonym-rings))
 
+(def ^{:doc "Pure transformation alias for build-equivalence-map per Tellman naming rules."}
+  equivalence-map build-equivalence-map)
+
 (defn project-term
   "Projects a token to its equivalence class canonical representative if present in equiv-map,
    otherwise returns the token unchanged."
   [equiv-map term]
   (get equiv-map term term))
 
+(def ^{:doc "Alias for project-term."}
+  quotient-term project-term)
+
 (defn project-sequence
   "Projects each token in a sequence through an equivalence map: t -> [t]~."
   [equiv-map tokens]
   (mapv #(project-term equiv-map %) tokens))
+
+(def ^{:doc "Linguistically precise quotient alias for project-sequence."}
+  quotient-sequence project-sequence)
 
 ;; --- Vocabulary Morphisms (Order & Vocabulary Mapping) ---
 
@@ -84,6 +93,9 @@
     {}
     mwe-map))
 
+(def ^{:doc "Pure transformation alias for build-mwe-trie."}
+  mwe-trie build-mwe-trie)
+
 (defn chunk-mwe-sequence
   "Greedily chunks multi-word expressions in a token sequence using a prefix trie.
    Non-matching tokens remain unchanged."
@@ -112,3 +124,6 @@
           (if match
             (recur (+ i (:len match)) (conj acc (:val match)))
             (recur (inc i) (conj acc (nth tokens i)))))))))
+
+(def ^{:doc "Concise alias for chunk-mwe-sequence."}
+  chunk-sequence chunk-mwe-sequence)

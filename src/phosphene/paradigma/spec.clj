@@ -79,6 +79,10 @@
           (and (every? #(contains? terms-present %) (vals ret))
                (every? (fn [[term target]] (contains? terms-present term)) ret)))))
 
+(s/fdef core/equivalence-map
+  :args (s/cat :synonym-rings (s/coll-of (s/coll-of :vocab/term :kind set?) :kind vector?))
+  :ret ::equivalence-map)
+
 (s/fdef core/project-sequence
   :args (s/cat :equiv-map ::equivalence-map :tokens ::token-sequence)
   :ret ::token-sequence
@@ -87,6 +91,10 @@
           ;; Invariant: Length is strictly preserved under 1-to-1 projection
           (= (count tokens) (count ret)))))
 
+(s/fdef core/quotient-sequence
+  :args (s/cat :equiv-map ::equivalence-map :tokens ::token-sequence)
+  :ret ::token-sequence)
+
 (s/fdef core/chunk-mwe-sequence
   :args (s/cat :trie map? :tokens ::token-sequence)
   :ret ::token-sequence
@@ -94,6 +102,10 @@
         (let [{:keys [tokens]} args]
           ;; Invariant: Chunking can only reduce or preserve sequence length, never expand it
           (<= (count ret) (count tokens)))))
+
+(s/fdef core/chunk-sequence
+  :args (s/cat :trie map? :tokens ::token-sequence)
+  :ret ::token-sequence)
 
 ;; --- 3. Function Specs: Glossematics & Semiometrics ---
 

@@ -22,11 +22,13 @@
   (testing "Synonym ring construction and sequence projection"
     (let [rings [#{:magnetic-curves :lines-of-force :magnetic-lines}
                  #{:toroid :annular-ring}]
-          equiv-map (core/build-equivalence-map rings)
+          equiv-map (core/equivalence-map rings)
           tokens [:faraday :observed :magnetic-curves :around :the :annular-ring]
-          projected (core/project-sequence equiv-map tokens)]
+          projected (core/quotient-sequence equiv-map tokens)]
       (is (= (count tokens) (count projected)))
       ;; Both :magnetic-curves and :magnetic-lines map to the same canonical representative
+      (is (= (core/quotient-term equiv-map :magnetic-curves)
+             (core/quotient-term equiv-map :magnetic-lines)))
       (is (= (core/project-term equiv-map :magnetic-curves)
              (core/project-term equiv-map :magnetic-lines)))
       (is (= [:faraday :observed :lines-of-force :around :the :annular-ring] projected)))))
@@ -47,9 +49,9 @@
     (let [mwe-map {[:lines :of :force] :term/lines-of-force
                    [:lines :of :magnetic :force] :term/lines-of-magnetic-force
                    [:electric :current] :term/electric-current}
-          trie (core/build-mwe-trie mwe-map)
+          trie (core/mwe-trie mwe-map)
           tokens [:by :observing :lines :of :magnetic :force :and :electric :current :in :wire]
-          chunked (core/chunk-mwe-sequence trie tokens)]
+          chunked (core/chunk-sequence trie tokens)]
       (is (= [:by :observing :term/lines-of-magnetic-force :and :term/electric-current :in :wire]
              chunked)))))
 
