@@ -46,6 +46,16 @@ Structural linguistic analysis operates across two orthogonal axes:
    - Quadripartite sign function pairing Expression-Form with Content-Form.
    - Commutation test (`commute?`): validates invariant structural opposition vs. allomorphic/synonymic variance.
    - Tripartite dependency calculus (`interdependence`, `determination`, `constellation`).
+6. **Greimas Semiotic Square (`phosphene.paradigma.greimas`):**
+   - Elementary structure of signification over sovereign contrary coordinates ($S_1 \leftrightarrow S_2$).
+   - Relational axes: contrariety, contradiction with double-negation invariant, and vertical deixis.
+   - Meta-terms: complex term ($S_1 + S_2$) and neutral term ($\sim S_1 + \sim S_2$).
+   - Canonical narrative trajectory ($S_1 \to \sim S_1 \to S_2$) and empirical feature projection (`project-onto-square`).
+7. **Barthes & Hjelmslev Staggered Connotation (`phosphene.paradigma.connotation`):**
+   - Recursive sign escalation: $\mathcal{S}^{(1)} = (E_1 \mathbin{R_1} C_1) \to \mathcal{S}^{(2)} = ((E_1 \mathbin{R_1} C_1) \mathbin{R_2} C_2)$.
+   - `collapse-sign`: quotients evaluated square projections or narrative programs into canonical order-$n$ signs.
+   - `lift-square`: constructs order-$(n+1)$ semiotic squares over order-$n$ sign predicates.
+   - `connotative-projection`: projects order-$n$ signs onto higher-order ideological/epistemic squares preserving provenance.
 
 ---
 
@@ -97,6 +107,30 @@ Structural linguistic analysis operates across two orthogonal axes:
 
 (glos/dependency-type frames :voltage :current)
 ;; => :determination-ab  (:current presupposes :voltage, but :voltage occurs independently)
+
+;; 5. Greimas Semiotic Square & Empirical Projection
+(def sq (para/semiotic-square :square/veridiction :being :seeming
+                              {:non-s1 :non-being :non-s2 :non-seeming
+                               :complex :truth :neutral :falsity}))
+
+(para/contrary? sq :being :seeming)
+;; => true
+
+;; Empirical feature projection onto the square
+(para/project-onto-square sq [:being :seeming])
+;; => {:projection/position :complex, :projection/term :truth, :projection/square :square/veridiction}
+
+;; 6. Roland Barthes' Staggered Connotation (Order-2 Epistemic Square)
+(def order-1-sign (para/collapse-sign :curved-lines {:id :curved-lines}))
+
+(def field-sq (para/lift-square :square/field-ontology
+                                :continuous-field :action-at-a-distance
+                                #{:curved-lines :lines-of-force}
+                                #{:straight-rays :instantaneous-pull}
+                                {:order 2}))
+
+(para/connotative-projection field-sq [order-1-sign])
+;; => {:projection/order 2, :projection/position :s1, :projection/term :continuous-field, ...}
 ```
 
 ---
