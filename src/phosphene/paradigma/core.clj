@@ -3,7 +3,9 @@
    and multi-word terminological expressions (MWEs).
    Composes with phosphene.syntagma for structural abstraction over notation."
   (:require [clojure.set :as set]
-            [clojure.string :as str]))
+            [clojure.string :as str]
+            [phosphene.paradigma.glossematics :as glos]
+            [phosphene.paradigma.greimas :as greimas]))
 
 ;; --- Term & Vocabulary Constructors ---
 
@@ -127,3 +129,16 @@
 
 (def ^{:doc "Concise alias for chunk-mwe-sequence."}
   chunk-sequence chunk-mwe-sequence)
+
+;; --- Re-exported Greimassian Semiotic Square Primitives ---
+
+(def semiotic-square greimas/semiotic-square)
+(def semiotic-square? greimas/semiotic-square?)
+(def contrary? greimas/contrary?)
+(def contradictory? greimas/contradictory?)
+(def presupposes? greimas/presupposes?)
+(def deixis-for greimas/deixis-for)
+(def negation greimas/negation)
+(def assertion greimas/assertion)
+(def narrative-transition greimas/narrative-transition)
+(def project-onto-square greimas/project-onto-square)
