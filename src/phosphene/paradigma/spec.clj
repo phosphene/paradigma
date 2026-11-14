@@ -3,7 +3,8 @@
   (:require [clojure.spec.alpha :as s]
             [clojure.spec.gen.alpha :as gen]
             [phosphene.paradigma.core :as core]
-            [phosphene.paradigma.glossematics :as glo]))
+            [phosphene.paradigma.glossematics :as glo]
+            [phosphene.paradigma.greimas :as greimas]))
 
 ;; --- 1. Dense Generators & Domain Alphabets ---
 
@@ -147,3 +148,65 @@
           ;; Invariant: Reflexive overlap is 1.0; symmetric overlap
           (and (if (= sign-a sign-b) (== 1.0 ret) true)
                (== ret (glo/plerematic-overlap sign-b sign-a))))))
+
+;; --- 4. Function Specs: Greimassian Semiotic Square ---
+
+(s/def :square/id keyword?)
+(s/def :square/term keyword?)
+(s/def ::semiotic-square
+  (s/with-gen
+    (s/and map?
+           #(contains? % :square/id)
+           #(contains? % :square/s1)
+           #(contains? % :square/s2)
+           #(contains? % :square/non-s1)
+           #(contains? % :square/non-s2)
+           #(contains? % :square/vertices))
+    #(gen/fmap (fn [[id s1 s2]] (greimas/semiotic-square id s1 s2))
+               (gen/tuple (gen/elements [:square/life-death :square/nature-culture :square/truth-falsity])
+                          (gen/elements [:term/life :term/nature :term/being])
+                          (gen/elements [:term/death :term/culture :term/seeming])))))
+
+(s/fdef greimas/semiotic-square
+  :args (s/or :three (s/cat :id keyword? :s1 keyword? :s2 keyword?)
+              :four (s/cat :id keyword? :s1 keyword? :s2 keyword? :opts map?))
+  :ret ::semiotic-square
+  :fn (fn [{:keys [ret]}]
+        (greimas/semiotic-square? ret)))
+
+(s/fdef greimas/contrary?
+  :args (s/cat :sq ::semiotic-square :term-a keyword? :term-b keyword?)
+  :ret boolean?)
+
+(s/fdef greimas/contradictory?
+  :args (s/cat :sq ::semiotic-square :term-a keyword? :term-b keyword?)
+  :ret boolean?)
+
+(s/fdef greimas/presupposes?
+  :args (s/cat :sq ::semiotic-square :antecedent keyword? :consequent keyword?)
+  :ret boolean?)
+
+(s/fdef greimas/negation
+  :args (s/cat :sq ::semiotic-square :term keyword?)
+  :ret (s/nilable keyword?)
+  :fn (fn [{:keys [args ret]}]
+        (let [{:keys [sq term]} args]
+          (if (contains? (:square/vertices sq) term)
+            ;; Invariant: double negation is identity
+            (= term (greimas/negation sq ret))
+            (nil? ret)))))
+
+(s/fdef greimas/assertion
+  :args (s/cat :sq ::semiotic-square :term keyword?)
+  :ret (s/nilable keyword?))
+
+(s/fdef greimas/narrative-transition
+  :args (s/cat :sq ::semiotic-square :term keyword?)
+  :ret (s/nilable (s/keys :req [:trajectory/initial :trajectory/negation :trajectory/destination :trajectory/valid?])))
+
+(s/fdef greimas/project-onto-square
+  :args (s/cat :sq ::semiotic-square
+               :features (s/with-gen (s/or :coll (s/coll-of keyword?) :map (s/map-of keyword? any?))
+                           #(gen/elements [#{:term/life} #{:term/death} #{:term/life :term/death} #{} {:term/life true}])))
+  :ret (s/keys :req [:projection/position :projection/term :projection/square]))
+
