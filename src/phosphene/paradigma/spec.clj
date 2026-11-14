@@ -4,7 +4,8 @@
             [clojure.spec.gen.alpha :as gen]
             [phosphene.paradigma.core :as core]
             [phosphene.paradigma.glossematics :as glo]
-            [phosphene.paradigma.greimas :as greimas]))
+            [phosphene.paradigma.greimas :as greimas]
+            [phosphene.paradigma.connotation :as conn]))
 
 ;; --- 1. Dense Generators & Domain Alphabets ---
 
@@ -209,4 +210,73 @@
                :features (s/with-gen (s/or :coll (s/coll-of keyword?) :map (s/map-of keyword? any?))
                            #(gen/elements [#{:term/life} #{:term/death} #{:term/life :term/death} #{} {:term/life true}])))
   :ret (s/keys :req [:projection/position :projection/term :projection/square]))
+
+;; --- 5. Function Specs: Connotative Semiotics (Barthes & Hjelmslev) ---
+
+(s/def :sign/order pos-int?)
+(s/def ::order-n-sign
+  (s/with-gen
+    (s/and map?
+           #(keyword? (:sign/id %))
+           #(pos-int? (:sign/order %))
+           #(contains? % :sign/expression)
+           #(set? (:sign/content %)))
+    #(gen/fmap (fn [[id ord exp]]
+                 {:sign/id id
+                  :sign/order ord
+                  :sign/expression exp
+                  :sign/content #{exp}
+                  :sign/derived-from nil
+                  :sign/metadata {}})
+               (gen/tuple (gen/elements [:sign/denotation-1 :sign/denotation-2 :sign/denotation-3])
+                          (gen/elements [1 2 3])
+                          (gen/elements [:curved-lines :linear-force :wave-motion])))))
+
+(s/fdef conn/collapse-sign
+  :args (s/or :one (s/cat :struct (s/with-gen any? #(gen/elements [{:projection/position :s1 :projection/term :being :projection/square :square/veridiction}
+                                                                  {:state/subject :hero :state/junction :conjunction :state/object :grail}
+                                                                  :denotation-token])))
+              :two (s/cat :struct (s/with-gen any? #(gen/elements [{:projection/position :s1 :projection/term :being :projection/square :square/veridiction}]))
+                          :opts map?))
+  :ret ::order-n-sign
+  :fn (fn [{:keys [ret]}]
+        (conn/order-n-sign? ret)))
+
+(s/fdef conn/sign-order
+  :args (s/cat :sign ::order-n-sign)
+  :ret pos-int?)
+
+(s/def ::lifted-square
+  (s/with-gen
+    (s/and map?
+           #(conn/lifted-square? %))
+    #(gen/return (conn/lift-square :square/ideology
+                                   :progressive :reactionary
+                                   #{:sign/denotation-1}
+                                   #{:sign/denotation-2}))))
+
+(s/fdef conn/lift-square
+  :args (s/or :four (s/cat :id keyword? :s1 keyword? :s2 keyword?
+                           :m1 any? :m2 any?)
+              :five (s/cat :id keyword? :s1 keyword? :s2 keyword?
+                           :m1 any? :m2 any? :opts map?))
+  :ret (s/and map? #(contains? % :square/order))
+  :fn (fn [{:keys [ret]}]
+        (conn/lifted-square? ret)))
+
+(s/fdef conn/connotative-projection
+  :args (s/cat :lifted-sq ::lifted-square
+               :signs (s/with-gen (s/or :single ::order-n-sign :coll (s/coll-of ::order-n-sign :kind vector?))
+                        #(gen/elements [[(conn/collapse-sign :sign/denotation-1 {:id :sign/denotation-1})]
+                                        [(conn/collapse-sign :sign/denotation-2 {:id :sign/denotation-2})]
+                                        [(conn/collapse-sign :sign/denotation-1 {:id :sign/denotation-1})
+                                         (conn/collapse-sign :sign/denotation-2 {:id :sign/denotation-2})]])))
+  :ret (s/keys :req [:projection/order :projection/position :projection/square :projection/derived-from])
+  :fn (fn [{:keys [args ret]}]
+        (let [{:keys [lifted-sq signs]} args]
+          ;; Order Monotonicity Invariant: target order >= lifted-sq order >= 2
+          (and (>= (:projection/order ret) 2)
+               (keyword? (:projection/square ret))
+               (vector? (:projection/derived-from ret))))))
+
 

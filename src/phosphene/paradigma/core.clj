@@ -5,7 +5,8 @@
   (:require [clojure.set :as set]
             [clojure.string :as str]
             [phosphene.paradigma.glossematics :as glos]
-            [phosphene.paradigma.greimas :as greimas]))
+            [phosphene.paradigma.greimas :as greimas]
+            [phosphene.paradigma.connotation :as conn]))
 
 ;; --- Term & Vocabulary Constructors ---
 
@@ -142,3 +143,12 @@
 (def assertion greimas/assertion)
 (def narrative-transition greimas/narrative-transition)
 (def project-onto-square greimas/project-onto-square)
+
+;; --- Re-exported Connotative Semiotics Primitives (Barthes & Hjelmslev) ---
+
+(def collapse-sign conn/collapse-sign)
+(def sign-order conn/sign-order)
+(def order-n-sign? conn/order-n-sign?)
+(def lift-square conn/lift-square)
+(def lifted-square? conn/lifted-square?)
+(def connotative-projection conn/connotative-projection)

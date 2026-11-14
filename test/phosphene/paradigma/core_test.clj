@@ -4,6 +4,7 @@
             [clojure.spec.test.alpha :as stest]
             [phosphene.paradigma.core :as core]
             [phosphene.paradigma.greimas :as greimas]
+            [phosphene.paradigma.connotation :as conn]
             [phosphene.paradigma.spec :as pspec]))
 
 (deftest vocabulary-construction-test
@@ -117,6 +118,70 @@
       (is (= {:projection/position :s2 :projection/term :seeming :projection/square :square/veridiction}
              (greimas/project-onto-square sq [:seeming]))))))
 
+(deftest connotative-semiotics-test
+  (testing "Canonical sign collapse (S^(1) -> order-1 sign)"
+    (let [sq-proj {:projection/position :s1 :projection/term :being :projection/square :square/veridiction}
+          s1 (conn/collapse-sign sq-proj)]
+      (is (true? (conn/order-n-sign? s1)))
+      (is (= 1 (conn/sign-order s1)))
+      (is (= :square/veridiction-being (:sign/id s1)))
+      (is (contains? (:sign/content s1) :being))
+      (is (= sq-proj (:sign/derived-from s1))))
+
+    (let [pn-state {:pn/id :pn/retrieval
+                    :state/subject :actor/jason
+                    :state/junction :conjunction
+                    :state/object :item/fleece}
+          s2 (conn/collapse-sign pn-state)]
+      (is (true? (conn/order-n-sign? s2)))
+      (is (= :pn/retrieval-conjunction (:sign/id s2)))))
+
+  (testing "Order-(n+1) lifted semiotic square construction"
+    (let [sq2 (conn/lift-square :square/epistemology
+                                :field-continuity :action-at-a-distance
+                                #{:pn/retrieval-conjunction :curved-lines}
+                                #{:straight-rays :instantaneous-pull}
+                                {:order 2})]
+      (is (true? (conn/lifted-square? sq2)))
+      (is (= 2 (:square/order sq2)))
+      (is (= :field-continuity (:square/s1 sq2)))
+      (is (= :action-at-a-distance (:square/s2 sq2)))))
+
+  (testing "Connotative projection (order 1 -> order 2)"
+    (let [sq2 (conn/lift-square :square/epistemology
+                                :field-continuity :action-at-a-distance
+                                #{:pn/retrieval-conjunction :curved-lines}
+                                #{:straight-rays :instantaneous-pull}
+                                {:order 2})
+          s-cont (conn/collapse-sign :curved-lines {:id :curved-lines})
+          s-dist (conn/collapse-sign :straight-rays {:id :straight-rays})]
+
+      ;; Positive pole projection
+      (let [p1 (conn/connotative-projection sq2 [s-cont])]
+        (is (= 2 (:projection/order p1)))
+        (is (= :s1 (:projection/position p1)))
+        (is (= :field-continuity (:projection/term p1)))
+        (is (= [:curved-lines] (:projection/derived-from p1))))
+
+      ;; Contrary pole projection
+      (let [p2 (conn/connotative-projection sq2 [s-dist])]
+        (is (= 2 (:projection/order p2)))
+        (is (= :s2 (:projection/position p2)))
+        (is (= :action-at-a-distance (:projection/term p2)))
+        (is (= [:straight-rays] (:projection/derived-from p2))))
+
+      ;; Complex synthesis (both present simultaneously)
+      (let [p3 (conn/connotative-projection sq2 [s-cont s-dist])]
+        (is (= 2 (:projection/order p3)))
+        (is (= :complex (:projection/position p3)))
+        (is (= :field-continuity+action-at-a-distance (:projection/term p3))))
+
+      ;; Neutral synthesis (unmatched order-1 signs)
+      (let [s-neutral (conn/collapse-sign :other-matter {:id :other-matter})
+            p4 (conn/connotative-projection sq2 [s-neutral])]
+        (is (= 2 (:projection/order p4)))
+        (is (= :neutral (:projection/position p4)))))))
+
 (deftest generative-spec-check-test
   (testing "Generative property checking with test.check across dense term vocabularies"
     (let [res (stest/check [`core/create-vocabulary
@@ -126,7 +191,11 @@
                             `core/chunk-mwe-sequence
                             `greimas/semiotic-square
                             `greimas/negation
-                            `greimas/project-onto-square]
+                            `greimas/project-onto-square
+                            `conn/collapse-sign
+                            `conn/sign-order
+                            `conn/lift-square
+                            `conn/connotative-projection]
                            {:clojure.spec.test.check/opts {:num-tests 100}})]
       (doseq [r res]
         (let [sym (:sym r)
